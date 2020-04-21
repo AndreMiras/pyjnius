@@ -1,5 +1,27 @@
 # Change Log
 
+## [1.3.0](https://github.com/kivy/pyjnius/tree/1.3.0) (2020-04-21)
+[Full Changelog](https://github.com/kivy/pyjnius/compare/1.2.1...1.3.0)
+
+**new features**
+- [\#483](https://github.com/kivy/pyjnius/pull/483)/[\#489](https://github.com/kivy/pyjnius/pull/489) allow passing a `signature` argument to constructors, to force selection of the desired one
+- [\#497](https://github.com/kivy/pyjnius/pull/497)/[\#506](https://github.com/kivy/pyjnius/pull/506)/[\#507](https://github.com/kivy/pyjnius/pull/507) support for more "dunder" methods/protocols on compatible interfaces than just `__len__`, and allow users to provide their own.
+- [\#500](https://github.com/kivy/pyjnius/pull/500) allow ignoring private methods and fields in autoclass (both default to False)
+- [\#503](https://github.com/kivy/pyjnius/pull/503) auto detect java_home on OSX, using `/usr/libexec/java_home` (if JAVA_HOME is not declared)
+- [\#514](https://github.com/kivy/pyjnius/pull/514) writing to static fields (and fix reading from them)
+- [\#517](https://github.com/kivy/pyjnius/pull/517) make signature exceptions more useful
+
+**bug fixes**
+- [\#481](https://github.com/kivy/pyjnius/pull/481) wrong use of strip on JRE path
+- [\#465](https://github.com/kivy/pyjnius/pull/465) correct reflection to avoid missing any methods from parent classes or interfaces
+- [\#508](https://github.com/kivy/pyjnius/pull/508) don't had error details with a custom exception when java class is not found
+- [\#510](https://github.com/kivy/pyjnius/pull/510) add missing references to .pxi files in setup.py, speeding up recompilation
+
+**docs**
+- [\#478](https://github.com/kivy/pyjnius/pull/478) document automatic Thread detach feature
+- [\#512](https://github.com/kivy/pyjnius/pull/512) document the requirement to keep reference to object/functions passed to java, for as long as it might use them
+
+
 ## [1.2.1](https://github.com/kivy/pyjnius/tree/1.2.1) (2019-12-04)
 [Full Changelog](https://github.com/kivy/pyjnius/compare/1.2.0...1.2.1)
 
