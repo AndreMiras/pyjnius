@@ -124,8 +124,10 @@ jobs:
       uses: actions/setup-java@v6
       with:
         java-version: ${{ matrix.java }}
-        distribution: 'temurin'
+        # Temurin retired its Win32 port; use maintained Zulu JDKs there.
+        distribution: ${{ matrix.os == 'windows-latest' && matrix.architecture == 'x86' && 'zulu' || 'temurin' }}
         architecture: ${{ matrix.architecture }}
+        check-latest: ${{ matrix.os == 'windows-latest' && matrix.architecture == 'x86' }}
 
     - name: (macOS) Setup test dependencies
       if: runner.os == 'macOS'

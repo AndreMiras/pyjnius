@@ -58,13 +58,40 @@ Desktop wheel CI
 
 For build-tool changes, include ``[build wheel]`` in the PR title before opening
 the PR or pushing another commit to exercise the release-shaped builds and tests.
+Editing the title alone does not trigger a new run.
 The existing pytest suite runs against the installed wheel, with only Java test
 fixtures compiled separately so the packaged helpers are used. Wheel-test
 failures block tag releases. Java 8 compilation targeting complements this
 installed-wheel runtime check.
 
-One Linux x86_64 / Python 3.14 job runs the built wheel on Java 8, independently
-of the build JDK; the other wheel jobs use Java 17. This is a representative
-backwards-compatibility check for toolchain bumps, rather than an exhaustive
-Python/JVM/platform guarantee. User-reported incompatibilities can be covered
-by targeted regression tests.
+The CPython 3.14 wheel jobs select these older-runtime references, using full
+JDKs for fixture compilation:
+
+.. list-table:: CPython 3.14 wheel runtime references
+   :header-rows: 1
+
+   * - Platform
+     - Runtime JDK
+   * - Windows x86 (win32)
+     - Zulu 8
+   * - Windows x64, Linux x86_64/aarch64, Intel macOS
+     - Temurin 8
+   * - Native Apple Silicon macOS
+     - Temurin 11
+
+The other main-matrix Python versions (3.11–3.13) use Java 17; Win32 runs only
+the representative 3.14 job. Each job uses pip's compatible-wheel selection:
+normally thin x86_64 on Intel macOS and universal2 on native ARM. Universal2's
+Intel slice is not separately exercised.
+
+Build compilers are independent of these runtime inputs and the Java 8 helper
+target. Host builds use the ``build_java`` / ``build_distribution`` selectors in
+``create.yml``, with a Zulu 17 override for Win32; Linux wheels compile with
+container OpenJDK 11. Zulu also supplies the Win32 source-CI JDKs.
+
+For applications, use a current maintained LTS suited to your platform and Java
+dependencies: currently 25 on the available 64-bit reference platforms. Java 25
+has source-CI coverage; wheel-runtime checks are the combinations above.
+Application Java dependencies may require a higher minimum. Coverage remains
+representative rather than an exhaustive Python/JVM/vendor/platform/artifact
+guarantee; user-reported incompatibilities can receive targeted regressions.

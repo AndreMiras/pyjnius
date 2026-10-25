@@ -40,6 +40,8 @@ jobs:
           - os: windows-latest
             architecture: 'x86'
             cibw_archs: 'x86'
+            build_java: '17'
+            build_distribution: 'zulu'
           - os: windows-latest
             architecture: 'x64'
             cibw_archs: 'AMD64'
@@ -69,9 +71,10 @@ jobs:
         if: ${{ matrix.os  != 'ubuntu-latest' }}
         uses: actions/setup-java@v6
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          java-version: ${{ matrix.build_java || '17' }}
+          distribution: ${{ matrix.build_distribution || 'temurin' }}
           architecture: ${{ matrix.architecture }}
+          check-latest: ${{ matrix.os == 'windows-latest' && matrix.architecture == 'x86' }}
 
       - name: Install cibuildwheel & build wheels (Windows)
         if: matrix.os == 'windows-latest'
@@ -130,7 +133,7 @@ jobs:
         os: ['ubuntu-latest', 'macos-latest', 'windows-latest', 'ubuntu-24.04-arm', 'macos-15-intel']
         python: ['3.11', '3.12', '3.13', '3.14']
         include:
-          # We may would like to introduce tests also on windows-latest on x86 (win32 wheels)?
+          # Win32 uses the dedicated job below.
           # macos-latest runs on Apple Silicon,
           # macos-15-intel runs on Intel
           - os: ubuntu-latest
@@ -148,12 +151,32 @@ jobs:
           - os: macos-latest
             architecture: 'aarch64'
             wheel_upload_pool: 'macos-latest-x64'
-          # One independent old-runtime check of the Linux release wheel.
+          # Representative older runtimes, independent of the build compiler.
           - os: ubuntu-latest
             python: '3.14'
             architecture: 'x64'
             wheel_upload_pool: 'ubuntu-latest-x64'
             runtime_java: '8'
+          - os: windows-latest
+            python: '3.14'
+            architecture: 'x64'
+            wheel_upload_pool: 'windows-latest-x64'
+            runtime_java: '8'
+          - os: ubuntu-24.04-arm
+            python: '3.14'
+            architecture: 'aarch64'
+            wheel_upload_pool: 'ubuntu-24.04-arm-aarch64'
+            runtime_java: '8'
+          - os: macos-15-intel
+            python: '3.14'
+            architecture: 'x64'
+            wheel_upload_pool: 'macos-latest-x64'
+            runtime_java: '8'
+          - os: macos-latest
+            python: '3.14'
+            architecture: 'aarch64'
+            wheel_upload_pool: 'macos-latest-x64'
+            runtime_java: '11'
     runs-on: ${{ matrix.os }}
     steps:
 
@@ -169,12 +192,14 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
+          architecture: ${{ matrix.architecture == 'aarch64' && 'arm64' || matrix.architecture }}
 
       - name: Setup java
         uses: actions/setup-java@v6
         with:
           java-version: ${{ matrix.runtime_java || '17' }}
           distribution: 'temurin'
+          java-package: jdk
           architecture: ${{ matrix.architecture }}
 
       - name: Setup ant on macOS
@@ -221,10 +246,13 @@ jobs:
   
 
   test_wheel_windows_x86:
-    name: Test win32 wheel on Python 3.14
+    name: Test win32 wheel on Python 3.14 Java 8 (Zulu)
     if: (github.event_name == 'create' && github.event.ref_type == 'tag') || contains(github.event.head_commit.message, '[build wheel]') || contains(github.event.pull_request.title, '[build wheel]')
     needs: build_wheels
     runs-on: windows-latest
+    env:
+      WHEEL_RUNTIME_JAVA: '8'
+      WHEEL_RUNTIME_DISTRIBUTION: 'zulu'
     steps:
       - uses: actions/checkout@v7
 
@@ -240,9 +268,11 @@ jobs:
 
       - uses: actions/setup-java@v6
         with:
-          java-version: '17'
-          distribution: temurin
+          java-version: ${{ env.WHEEL_RUNTIME_JAVA }}
+          distribution: ${{ env.WHEEL_RUNTIME_DISTRIBUTION }}
+          java-package: jdk
           architecture: x86
+          check-latest: true
 
       - name: Confirm 32-bit Python
         run: python -c "import struct; assert struct.calcsize('P') == 4"
